@@ -1,18 +1,23 @@
 import streamlit as st
 import google.generativeai as genai
 import os
-from dotenv import load_dotenv
 
-# Load the API key from the .env file
-load_dotenv()
-api_key = os.getenv("GEMINI_API_KEY")
+# --- SMART API KEY LOADER ---
+# Try to get the key from Streamlit Cloud Secrets first (Production)
+try:
+    api_key = st.secrets["GEMINI_API_KEY"]
+except (KeyError, FileNotFoundError):
+    # If it fails, we are running locally, so use the .env file (Development)
+    from dotenv import load_dotenv
+    load_dotenv()
+    api_key = os.getenv("GEMINI_API_KEY")
 
 # Configure the LLM
 if api_key:
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel('gemini-2.5-flash')
 else:
-    st.error("API Key not found. Please check your .env file.")
+    st.error("API Key not found. Please check your .env file or Streamlit Secrets.")
     st.stop()
 
 # --- LLM ENGINE FUNCTIONS ---
@@ -124,5 +129,3 @@ elif st.session_state.stage == 'complete':
     if st.button("Start a New Process"):
         st.session_state.clear()
         st.rerun()
-
-        
